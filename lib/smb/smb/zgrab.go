@@ -6,8 +6,6 @@ import (
 	"errors"
 	"fmt"
 	"net"
-	"strings"
-
 	"unicode/utf16"
 
 	"github.com/zmap/zgrab2/lib/smb/gss"
@@ -231,8 +229,8 @@ func GetSMBLog(conn net.Conn, session bool, v1 bool, debug bool) (smbLog *SMBLog
 
 	if v1 {
 		err := s.LoggedNegotiateProtocolv1(session)
-		if err == nil && session {
-			s.LoggedSessionSetupV1()
+		if err != nil {
+			s.Debug("SMBv1 negotiation error", nil)
 		}
 	} else {
 		err = s.LoggedNegotiateProtocol(session)
@@ -297,62 +295,12 @@ func (ls *LoggedSession) LoggedNegotiateProtocolv1(setup bool) error {
 		Capabilities: negRes.Capabilities,
 		SystemTime:   getTime(negRes.SystemTime),
 	}
-
-	return nil
-}
-
-func (ls *LoggedSession) LoggedSessionSetupV1() (err error) {
-	s := &ls.Session
-	var buf []byte
-
 	req := s.NewSessionSetupV1Req()
 	s.Debug("Sending LoggedSessionSetupV1 Request", nil)
 	buf, err = s.send(req)
 	if err != nil {
 		s.Debug("No response to SMBv1 cleartext SessionSetup", nil)
 		return nil
-	}
-
-	// Safely trim down everything except the payload
-	if len(buf) < SmbHeaderV1Length {
-		return nil
-	}
-	// When using unicode, a padding byte will exist after the header
-	paddingLength := int((buf[11] >> 7) & 1)
-	// Skip header
-	buf = buf[SmbHeaderV1Length:]
-	// The byte after the header holds the number of words remaining in uint16s
-	// words + 3 bytes for wordlength & bytecount + potential unicode padding
-	claimedRemainingSize := int(buf[0])*2 + 3 + paddingLength
-	if len(buf) < claimedRemainingSize {
-		return nil
-	}
-	buf = buf[claimedRemainingSize:]
-
-	var decoded string
-	if paddingLength == 1 {
-		// Unicode string
-		decoded, err = encoder.FromSmbString(buf)
-		if err != nil {
-			s.Debug("Error encountered while decoding SMB string", err)
-			return nil
-		}
-	} else {
-		// ASCII string
-		decoded = string(buf)
-	}
-
-	// We expect 3 null-terminated strings in this order;
-	// These fields are technically all optional, but guaranteed to be in this order
-	fields := strings.Split(decoded, "\000")
-	if len(fields) > 0 {
-		ls.Log.NativeOs = fields[0]
-	}
-	if len(fields) > 1 {
-		ls.Log.NTLM = fields[1]
-	}
-	if len(fields) > 2 {
-		ls.Log.GroupName = fields[2]
 	}
 
 	return nil
