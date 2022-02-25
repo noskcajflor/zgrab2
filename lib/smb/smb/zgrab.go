@@ -311,6 +311,26 @@ func (ls *LoggedSession) LoggedNegotiateProtocolv1(setup bool) error {
 			gss.SpnegoOid,
 			negRes.SecurityBlob.OID))
 	}
+	// Check for NTLMSSP support
+	ntlmsspOID, err := gss.ObjectIDStrToInt(gss.NtLmSSPMechTypeOid)
+	if err != nil {
+		s.Debug("", err)
+		return err
+	}
+	logStruct.NegotiationLog.AuthenticationTypes = make([]string, len(negRes.SecurityBlob.Data.MechTypes))
+	logStruct.HasNTLM = false
+	for i, mechType := range negRes.SecurityBlob.Data.MechTypes {
+		logStruct.NegotiationLog.AuthenticationTypes[i] = mechType.String()
+		if mechType.Equal(asn1.ObjectIdentifier(ntlmsspOID)) {
+			logStruct.HasNTLM = true
+		}
+	}
+
+	if !setup {
+		return nil
+	}
+
+	s.securityMode = uint16(negRes.SecurityMode)
 
 	req := s.NewSessionSetupV1Req()
 	s.Debug("Sending LoggedSessionSetupV1 Request", nil)
