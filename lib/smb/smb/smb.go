@@ -164,13 +164,14 @@ type NegotiateResV1 struct {
 	MaxNumberVcs    uint16
 	MaxBufferSize   uint32
 	MaxRawSize      uint32
+	ServerGuid      []byte `smb:"fixed:16"`
 	SessionKey      uint32
 	Capabilities    uint32
 	SystemTime      uint64
 	ServerTimezon   uint16
 	ChallengeLength uint8
 	ByteCount       uint16 `smb:"len:VarData"`
-	VarData []byte
+	VarData         []byte
 }
 
 type NegotiateReq struct {

@@ -182,6 +182,10 @@ func getHeaderLog(src *Header) HeaderLog {
 	return *fillHeaderLog(src, nil)
 }
 
+func getHeaderLogV1(src *HeaderV1) HeaderLog {
+	return *fillHeaderLogV1(src, nil)
+}
+
 func fillHeaderLog(src *Header, dest *HeaderLog) *HeaderLog {
 	if dest == nil {
 		dest = new(HeaderLog)
@@ -191,6 +195,17 @@ func fillHeaderLog(src *Header, dest *HeaderLog) *HeaderLog {
 	dest.Command = src.Command
 	dest.Credits = src.Credits
 	dest.Flags = src.Flags
+	return dest
+}
+
+func fillHeaderLogV1(src *HeaderV1, dest *HeaderLog) *HeaderLog {
+	if dest == nil {
+		dest = new(HeaderLog)
+	}
+	dest.ProtocolID = append(make([]byte, len(src.ProtocolID)), src.ProtocolID...)
+	dest.Status = src.Status
+	dest.Command = uint16(src.Command)
+	dest.Flags = uint32(src.Flags)
 	return dest
 }
 
@@ -275,6 +290,13 @@ func (ls *LoggedSession) LoggedNegotiateProtocolv1(setup bool) error {
 	}
 
 	// TODO: Parse capabilities and return those results
+	logStruct.NegotiationLog = &NegotiationLog{
+		HeaderLog:    getHeaderLogV1(&negRes.HeaderV1),
+		SecurityMode: uint16(negRes.SecurityMode),
+		ServerGuid:   append(make([]byte, len(negRes.ServerGuid)), negRes.ServerGuid...),
+		Capabilities: negRes.Capabilities,
+		SystemTime:   getTime(negRes.SystemTime),
+	}
 
 	return nil
 }
