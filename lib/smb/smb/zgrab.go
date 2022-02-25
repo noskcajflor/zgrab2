@@ -331,6 +331,16 @@ func (ls *LoggedSession) LoggedNegotiateProtocolv1(setup bool) error {
 	}
 
 	s.securityMode = uint16(negRes.SecurityMode)
+	mode := uint16(s.securityMode)
+	if mode&SecurityModeSigningEnabled > 0 {
+		if mode&SecurityModeSigningRequired > 0 {
+			s.IsSigningRequired = true
+		} else {
+			s.IsSigningRequired = false
+		}
+	} else {
+		s.IsSigningRequired = false
+	}
 
 	req := s.NewSessionSetupV1Req()
 	s.Debug("Sending LoggedSessionSetupV1 Request", nil)
