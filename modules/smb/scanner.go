@@ -113,7 +113,7 @@ func (scanner *Scanner) Scan(target zgrab2.ScanTarget) (zgrab2.ScanStatus, inter
 	var result *smb.SMBLog
 	setupSession := scanner.config.SetupSession
 	verbose := scanner.config.Verbose
-	result, err = smb.GetSMBLog(conn, setupSession, false, verbose)
+	result, err = smb.GetSMBLog(conn, setupSession, true, verbose)
 	if err != nil {
 		if result == nil {
 			conn.Close()
@@ -122,7 +122,7 @@ func (scanner *Scanner) Scan(target zgrab2.ScanTarget) (zgrab2.ScanStatus, inter
 				return zgrab2.TryGetScanStatus(err), nil, err
 			}
 			defer conn.Close()
-			result, err = smb.GetSMBLog(conn, setupSession, true, verbose)
+			result, err = smb.GetSMBLog(conn, setupSession, false, verbose)
 			if err != nil {
 				return zgrab2.TryGetScanStatus(err), result, err
 			}
