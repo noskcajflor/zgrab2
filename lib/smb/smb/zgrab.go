@@ -281,7 +281,7 @@ func (ls *LoggedSession) LoggedNegotiateProtocolv1(setup bool) error {
 		return fmt.Errorf("Invalid v1 Protocol ID\n")
 	}
 
-	negRes := NegotiateResV1{}
+	negRes := NewNegotiateResV1()
 	// TODO: Unmarshal struct depends on the CIF dialect response field.
 	if err := encoder.Unmarshal(buf, &negRes); err != nil {
 		s.Debug("Raw:\n"+hex.Dump(buf), err)

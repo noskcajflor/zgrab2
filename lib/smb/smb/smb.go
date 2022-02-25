@@ -172,6 +172,8 @@ type NegotiateResV1 struct {
 	ChallengeLength uint8
 	ByteCount       uint16 `smb:"len:VarData"`
 	VarData         []byte
+	Reserved        uint16
+	SecurityBlob    *gss.NegTokenInit
 }
 
 type NegotiateReq struct {
@@ -379,6 +381,18 @@ func NewNegotiateRes() NegotiateRes {
 		SecurityBufferLength: 0,
 		Reserved2:            0,
 		SecurityBlob:         &gss.NegTokenInit{},
+	}
+}
+
+func NewNegotiateResV1() NegotiateResV1 {
+	return NegotiateResV1{
+		HeaderV1:     newHeaderV1(),
+		SecurityMode: 0,
+		Reserved:     0,
+		ServerGuid:   make([]byte, 16),
+		Capabilities: 0,
+		SystemTime:   0,
+		SecurityBlob: &gss.NegTokenInit{},
 	}
 }
 
