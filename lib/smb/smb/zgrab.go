@@ -295,6 +295,23 @@ func (ls *LoggedSession) LoggedNegotiateProtocolv1(setup bool) error {
 		Capabilities: negRes.Capabilities,
 		SystemTime:   getTime(negRes.SystemTime),
 	}
+	if negRes.HeaderV1.Status != StatusOk {
+		return errors.New(fmt.Sprintf("NT Status Error: %d\n", negRes.HeaderV1.Status))
+	}
+
+	// Check SPNEGO security blob
+	spnegoOID, err := gss.ObjectIDStrToInt(gss.SpnegoOid)
+	if err != nil {
+		return err
+	}
+	oid := negRes.SecurityBlob.OID
+	if !oid.Equal(asn1.ObjectIdentifier(spnegoOID)) {
+		return errors.New(fmt.Sprintf(
+			"Unknown security type OID [expecting %s]: %s\n",
+			gss.SpnegoOid,
+			negRes.SecurityBlob.OID))
+	}
+
 	req := s.NewSessionSetupV1Req()
 	s.Debug("Sending LoggedSessionSetupV1 Request", nil)
 	buf, err = s.send(req)
