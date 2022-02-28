@@ -295,13 +295,33 @@ func (ls *LoggedSession) LoggedNegotiateProtocolv1(setup bool) error {
 		Capabilities: negRes.Capabilities,
 		SystemTime:   getTime(negRes.SystemTime),
 	}
-	req, _ := s.NewSessionSetupV1Req()
-	req.Capabilities = negRes.Capabilities
+	ssreq, _ := s.NewSessionSetupV1Req()
+	ssreq.Capabilities = negRes.Capabilities
 	s.Debug("Sending LoggedSessionSetupV1 Request", nil)
-	buf, err = s.send(req)
+	buf, err = s.send(ssreq)
 	if err != nil {
 		s.Debug("No response to SMBv1 cleartext SessionSetup", nil)
 		return nil
+	}
+	ssres, err := NewSessionSetupV1Res()
+	if err != nil {
+		s.Debug("", err)
+		return err
+	}
+	buf, err = encoder.Marshal(ssreq)
+	if err != nil {
+		s.Debug("", err)
+		return err
+	}
+	buf, err = s.send(ssreq)
+	if err != nil {
+		s.Debug("Raw:\n"+hex.Dump(buf), err)
+		return err
+	}
+	s.Debug("Unmarshalling SessionSetup1 response", nil)
+	if err := encoder.Unmarshal(buf, &ssres); err != nil {
+		s.Debug("", err)
+		return err
 	}
 
 	return nil

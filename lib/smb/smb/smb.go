@@ -156,6 +156,15 @@ type SessionSetupV1Req struct {
 	SecurityBlob          *gss.NegTokenInit
 }
 
+type SessionSetupV1Res struct {
+	Header
+	StructureSize        uint16
+	Flags                uint16
+	SecurityBufferOffset uint16 `smb:"offset:SecurityBlob"`
+	SecurityBufferLength uint16 `smb:"len:SecurityBlob"`
+	SecurityBlob         *gss.NegTokenResp
+}
+
 type NegotiateResV1 struct {
 	HeaderV1
 	WordCount       uint8
@@ -359,6 +368,18 @@ func (s *Session) NewSessionSetupV1Req() (SessionSetupV1Req, error) {
 		VarData:      []byte{},
 		SecurityBlob: &init,
 	}, nil
+}
+
+func NewSessionSetupV1Res() (SessionSetupV1Res, error) {
+	resp, err := gss.NewNegTokenResp()
+	if err != nil {
+		return SessionSetupV1Res{}, err
+	}
+	ret := SessionSetupV1Res{
+		Header:       newHeader(),
+		SecurityBlob: &resp,
+	}
+	return ret, nil
 }
 
 func (s *Session) NewNegotiateReq() NegotiateReq {
