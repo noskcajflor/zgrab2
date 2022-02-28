@@ -153,6 +153,7 @@ type SessionSetupV1Req struct {
 	Capabilities          uint32
 	ByteCount             uint16
 	VarData               []byte
+	SecurityBlob          *gss.NegTokenInit
 }
 
 type NegotiateResV1 struct {
@@ -328,17 +329,36 @@ func (s *Session) NewNegotiateReqV1() NegotiateReqV1 {
 	}
 }
 
-func (s *Session) NewSessionSetupV1Req() SessionSetupV1Req {
+func (s *Session) NewSessionSetupV1Req() (SessionSetupV1Req, error) {
 	header := newHeaderV1()
 	header.Command = 0x73 // SMB1 Session Setup
-	return SessionSetupV1Req{
-		HeaderV1:    header,
-		WordCount:   0xd,
-		AndCommand:  0xff,
-		MaxBuffer:   0x1111,
-		MaxMPXCount: 0xa,
-		VarData:     []byte{},
+
+	ntlmsspneg := ntlmssp.NewNegotiate(s.options.Domain, s.options.Workstation)
+	data, err := encoder.Marshal(ntlmsspneg)
+	if err != nil {
+		return SessionSetupV1Req{}, err
 	}
+
+	if s.sessionID != 0 {
+		return SessionSetupV1Req{}, errors.New("Bad session ID for session setup 1 message")
+	}
+
+	// Initial session setup request
+	init, err := gss.NewNegTokenInit()
+	if err != nil {
+		return SessionSetupV1Req{}, err
+	}
+	init.Data.MechToken = data
+	return SessionSetupV1Req{
+		HeaderV1:     header,
+		WordCount:    0xd,
+		AndCommand:   0xff,
+		MaxBuffer:    0x1111,
+		MaxMPXCount:  0xa,
+		Capabilities: 0x0,
+		VarData:      []byte{},
+		SecurityBlob: &init,
+	}, nil
 }
 
 func (s *Session) NewNegotiateReq() NegotiateReq {

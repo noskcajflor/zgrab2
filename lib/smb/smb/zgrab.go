@@ -295,7 +295,8 @@ func (ls *LoggedSession) LoggedNegotiateProtocolv1(setup bool) error {
 		Capabilities: negRes.Capabilities,
 		SystemTime:   getTime(negRes.SystemTime),
 	}
-	req := s.NewSessionSetupV1Req()
+	req, _ := s.NewSessionSetupV1Req()
+	req.Capabilities = negRes.Capabilities
 	s.Debug("Sending LoggedSessionSetupV1 Request", nil)
 	buf, err = s.send(req)
 	if err != nil {
