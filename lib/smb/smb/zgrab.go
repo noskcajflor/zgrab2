@@ -5,12 +5,11 @@ import (
 	"encoding/hex"
 	"errors"
 	"fmt"
-	"net"
-	"unicode/utf16"
-
 	"github.com/zmap/zgrab2/lib/smb/gss"
 	"github.com/zmap/zgrab2/lib/smb/ntlmssp"
 	"github.com/zmap/zgrab2/lib/smb/smb/encoder"
+	"net"
+	"unicode/utf16"
 )
 
 // HeaderLog contains the relevant parts of the header that is included with
@@ -286,7 +285,6 @@ func (ls *LoggedSession) LoggedNegotiateProtocolv1(setup bool) error {
 		// Not returning error here, because the NegotiationResV1 is
 		// only valid for the extended NT LM 0.12 dialect of SMB1.
 	}
-
 	// TODO: Parse capabilities and return those results
 	logStruct.NegotiationLog = &NegotiationLog{
 		HeaderLog:    getHeaderLogV1(&negRes.HeaderV1),
@@ -296,7 +294,7 @@ func (ls *LoggedSession) LoggedNegotiateProtocolv1(setup bool) error {
 		SystemTime:   getTime(negRes.SystemTime),
 	}
 	ssreq, _ := s.NewSessionSetupV1Req()
-	ssreq.Capabilities = negRes.Capabilities
+	ssreq.SessionKey = negRes.SessionKey
 	s.Debug("Sending LoggedSessionSetupV1 Request", nil)
 	buf, err = s.send(ssreq)
 	if err != nil {

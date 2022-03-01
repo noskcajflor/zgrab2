@@ -140,20 +140,22 @@ type NegotiateReqV1 struct {
 type SessionSetupV1Req struct {
 	HeaderV1
 	WordCount             uint8
-	AndCommand            uint8
+	AndXCommand           uint8
 	Reserved1             uint8
-	AndOffset             uint16
+	AndXOffset            uint16
 	MaxBuffer             uint16
 	MaxMPXCount           uint16
 	VCNumber              uint16
 	SessionKey            uint32
+	SecurityBlobLength    uint16 `smb:"len:SecurityBlob"`
+	Reserved2             uint32
 	OEMPasswordLength     uint16
 	UnicodePasswordLength uint16
-	Reserved2             uint32
 	Capabilities          uint32
 	ByteCount             uint16
-	VarData               []byte
+	SecurityBufferOffset  uint16 `smb:"offset:SecurityBlob"`
 	SecurityBlob          *gss.NegTokenInit
+	VarData               []byte
 }
 
 type SessionSetupV1Res struct {
@@ -168,19 +170,19 @@ type SessionSetupV1Res struct {
 type NegotiateResV1 struct {
 	HeaderV1
 	WordCount       uint8
-	DialectIndex    uint16
+	SelectedIndex   uint16
 	SecurityMode    uint8
 	MaxMpxCount     uint16
 	MaxNumberVcs    uint16
 	MaxBufferSize   uint32
 	MaxRawSize      uint32
-	ServerGuid      []byte `smb:"fixed:16"`
 	SessionKey      uint32
 	Capabilities    uint32
 	SystemTime      uint64
-	ServerTimezon   uint16
+	ServerTimeZone  uint16
 	ChallengeLength uint8
 	ByteCount       uint16 `smb:"len:VarData"`
+	ServerGuid      []byte `smb:"fixed:16"`
 	VarData         []byte
 	Reserved        uint16
 	SecurityBlob    *gss.NegTokenInit
@@ -360,10 +362,11 @@ func (s *Session) NewSessionSetupV1Req() (SessionSetupV1Req, error) {
 	init.Data.MechToken = data
 	return SessionSetupV1Req{
 		HeaderV1:     header,
-		WordCount:    0xd,
-		AndCommand:   0xff,
+		WordCount:    0xc,
+		AndXCommand:  0xff,
 		MaxBuffer:    0x1111,
 		MaxMPXCount:  0xa,
+		VCNumber:     0x01,
 		Capabilities: 0x0,
 		VarData:      []byte{},
 		SecurityBlob: &init,
