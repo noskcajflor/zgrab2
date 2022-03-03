@@ -152,7 +152,7 @@ type SessionSetupV1Req struct {
 	Capabilities       uint32
 	ByteCount          uint16
 	SecurityBlob       *gss.NegTokenInit
-	NativeOs           []byte
+	SmbVarData         SmbV1VarData
 }
 
 type SessionSetupV1Res struct {
@@ -290,6 +290,12 @@ type TreeDisconnectRes struct {
 	Reserved      uint16
 }
 
+type SmbV1VarData struct {
+	NativeOs         []byte
+	NativeLanManager []byte
+	PrimaryDomain    []byte
+}
+
 func newHeaderV1() HeaderV1 {
 	return HeaderV1{
 		ProtocolID: []byte(ProtocolSmb),
@@ -340,6 +346,14 @@ func (s *Session) NewSessionSetupV1Req() (SessionSetupV1Req, error) {
 	header := newHeaderV1()
 	header.MID = 0x01
 	header.Command = 0x73 // SMB1 Session Setup
+	VarData := SmbV1VarData{
+		NativeOs:         []byte("zgrab2"),
+		NativeLanManager: []byte("Native Lanman"),
+		PrimaryDomain:    []byte(""),
+	}
+	VarData.NativeOs = append(VarData.NativeOs, 0x00)
+	VarData.NativeLanManager = append(VarData.NativeLanManager, 0x00)
+	VarData.PrimaryDomain = append(VarData.PrimaryDomain, 0x00)
 
 	ntlmsspneg := ntlmssp.NewNegotiate(s.options.Domain, s.options.Workstation)
 	data, err := encoder.Marshal(ntlmsspneg)
@@ -358,19 +372,21 @@ func (s *Session) NewSessionSetupV1Req() (SessionSetupV1Req, error) {
 	}
 	init.Data.MechToken = data
 	return SessionSetupV1Req{
-		HeaderV1:     header,
-		WordCount:    0xc,
-		AndXCommand:  0xff,
-		Reserved:     0x00,
-		AndXOffset:   0x0091,
-		MaxBuffer:    0xffff,
-		MaxMPXCount:  0x01,
-		VCNumber:     0x01,
-		SessionKey:   0x00000000,
-		Reserved2:    0x00000000,
-		ByteCount:    0x000e,
-		SecurityBlob: &init,
-	}, nil
+			HeaderV1:     header,
+			WordCount:    0xc,
+			AndXCommand:  0xff,
+			Reserved:     0x00,
+			AndXOffset:   0x0091,
+			MaxBuffer:    0xffff,
+			MaxMPXCount:  0x01,
+			VCNumber:     0x01,
+			SessionKey:   0x00000000,
+			Reserved2:    0x00000000,
+			SecurityBlob: &init,
+			ByteCount:    0x0058,
+			SmbVarData:   VarData,
+		},
+		nil
 }
 
 func NewSessionSetupV1Res() (SessionSetupV1Res, error) {
