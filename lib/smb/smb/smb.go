@@ -139,23 +139,20 @@ type NegotiateReqV1 struct {
 
 type SessionSetupV1Req struct {
 	HeaderV1
-	WordCount             uint8
-	AndXCommand           uint8
-	Reserved1             uint8
-	AndXOffset            uint16
-	MaxBuffer             uint16
-	MaxMPXCount           uint16
-	VCNumber              uint16
-	SessionKey            uint32
-	SecurityBlobLength    uint16 `smb:"len:SecurityBlob"`
-	Reserved2             uint32
-	OEMPasswordLength     uint16
-	UnicodePasswordLength uint16
-	Capabilities          uint32
-	ByteCount             uint16
-	SecurityBufferOffset  uint16 `smb:"offset:SecurityBlob"`
-	SecurityBlob          *gss.NegTokenInit
-	VarData               []byte
+	WordCount          uint8
+	AndXCommand        uint8
+	Reserved           uint8
+	AndXOffset         uint16
+	MaxBuffer          uint16
+	MaxMPXCount        uint16
+	VCNumber           uint16
+	SessionKey         uint32
+	SecurityBlobLength uint16 `smb:"len:SecurityBlob"`
+	Reserved2          uint32
+	Capabilities       uint32
+	ByteCount          uint16
+	SecurityBlob       *gss.NegTokenInit
+	VarData            []byte
 }
 
 type SessionSetupV1Res struct {
@@ -181,11 +178,10 @@ type NegotiateResV1 struct {
 	SystemTime      uint64
 	ServerTimeZone  uint16
 	ChallengeLength uint8
-	ByteCount       uint16 `smb:"len:VarData"`
 	ServerGuid      []byte `smb:"fixed:16"`
-	VarData         []byte
 	Reserved        uint16
 	SecurityBlob    *gss.NegTokenInit
+	ByteCount       uint16
 }
 
 type NegotiateReq struct {
@@ -342,6 +338,7 @@ func (s *Session) NewNegotiateReqV1() NegotiateReqV1 {
 
 func (s *Session) NewSessionSetupV1Req() (SessionSetupV1Req, error) {
 	header := newHeaderV1()
+	header.MID = 0x01
 	header.Command = 0x73 // SMB1 Session Setup
 
 	ntlmsspneg := ntlmssp.NewNegotiate(s.options.Domain, s.options.Workstation)
@@ -364,11 +361,13 @@ func (s *Session) NewSessionSetupV1Req() (SessionSetupV1Req, error) {
 		HeaderV1:     header,
 		WordCount:    0xc,
 		AndXCommand:  0xff,
-		MaxBuffer:    0x1111,
-		MaxMPXCount:  0xa,
+		Reserved:     0x00,
+		AndXOffset:   0x0091,
+		MaxBuffer:    0xffff,
+		MaxMPXCount:  0x01,
 		VCNumber:     0x01,
-		Capabilities: 0x0,
-		VarData:      []byte{},
+		SessionKey:   0x00000000,
+		Reserved2:    0x00000000,
 		SecurityBlob: &init,
 	}, nil
 }

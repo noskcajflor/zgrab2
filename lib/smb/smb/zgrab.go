@@ -120,6 +120,50 @@ type SMBCapabilities struct {
 	Encryption bool `json:"smb_encryption_support,omitempty"`        // Only for 3.0, 3.0.2
 }
 
+const (
+	SMB_CAP_RAW_MODE           = 0x00000001 // Raw mode
+	SMB_CAP_MPX_MODE           = 0x00000002 // MPX Mode
+	SMB_CAP_UNICODE            = 0x00000004 // Unicode
+	SMB_CAP_LARGE_FILES        = 0x00000008 // Large Files
+	SMB_CAP_NT_SMBS            = 0x00000010 // NT SMBs
+	SMB_CAP_RPC_REMOTE_APIS    = 0x00000020 // RPC Remote APIs
+	SMB_CAP_STATUS32           = 0x00000040 // NT Status Codes
+	SMB_CAP_LEVEL_II_OPLOCKS   = 0x00000080 // Level 2 Oplocks
+	SMB_CAP_LOCK_AND_READ      = 0x00000100 // Lock and Read
+	SMB_CAP_NT_FIND            = 0x00000200 // NT Find
+	SMB_CAP_DFS                = 0x00001000 // Dfs
+	SMB_CAP_INFOLEVEL_PASSTHRU = 0x00002000 // Infolevel Passthru
+	SMB_CAP_LARGE_READX        = 0x00004000 // Large ReadX
+	SMB_CAP_LARGE_WRITEX       = 0x00008000 // Large WriteX
+	SMB_CAP_LWIO               = 0x00010000 // LWIO
+	SMB_CAP_UNIX               = 0x00800000 // UNIX
+	SMB_CAP_COMPRESSED_DATA    = 0x02000000 // Compressed Data
+	SMB_CAP_DYNAMIC_REAUTH     = 0x20000000 // Dynamic Reauth
+	SMB_CAP_EXTENDED_SECURITY  = 0x80000000 // Extended Security
+)
+
+type SMBCapabilitiesV1 struct {
+	RawMode           bool `json:"smb_raw_mode_support,omitempty"`
+	MpxMode           bool `json:"smb_mpx_mode_support,omitempty"`
+	Unicode           bool `json:"smb_unicode_support,omitempty"`
+	LargeFiles        bool `json:"smb_large_files_support,omitempty"`
+	NTSMBs            bool `json:"smb_nt_smb_support,omitempty"`
+	RPCRemoteAPIs     bool `json:"smb_rpc_remote_apis_support,omitempty"`
+	Status32          bool `json:"smb_status32_support,omitempty"`
+	levelTwoOplocks   bool `json:"smb_level_two_oplocks_support,omitempty"`
+	LockAndRead       bool `json:"smb_lock_and_read_support,omitempty"`
+	NTFind            bool `json:"smb_nt_find_support,omitempty"`
+	DFSSupport        bool `json:"smb_dfs_support,omitempty"`
+	InfoLevelPassthru bool `json:"smb_infolevel_passthru_support,omitempty"`
+	LargeReadX        bool `json:"smb_large_readx_support,omitempty"`
+	LargeWriteX       bool `json:"smb_large_writex_support,omitempty"`
+	LWIO              bool `json:"smb_lwio_support,omitempty"`
+	UNIX              bool `json:"smb_unix_suport,omitempty"`
+	CompressedData    bool `json:"smb_compressed_data_support,omitempty"`
+	DynamicReauth     bool `json:"smb_dynamic_reauth_support,omitempty"`
+	ExtendedSecurity  bool `json:"smb_extended_security_support,omitempty"`
+}
+
 // SMBLog logs the relevant information about the session.
 type SMBLog struct {
 	// SupportV1 is true if the server's protocol ID indicates support for
@@ -143,7 +187,8 @@ type SMBLog struct {
 	//
 	// This is based on Sect. 2.2.4 from the [MS-SMB2] document, which states:
 	// "The Capabilities field specifies protocol capabilities for the server."
-	Capabilities *SMBCapabilities `json:"smb_capabilities,omitempty"`
+	Capabilities   *SMBCapabilities   `json:"smb_capabilities,omitempty"`
+	CapabilitiesV1 *SMBCapabilitiesV1 `json:"smb_capabilities,omitempty"`
 
 	// HasNTLM is true if the server supports the NTLM authentication method.
 	HasNTLM bool `json:"has_ntlm"`
@@ -285,7 +330,30 @@ func (ls *LoggedSession) LoggedNegotiateProtocolv1(setup bool) error {
 		// Not returning error here, because the NegotiationResV1 is
 		// only valid for the extended NT LM 0.12 dialect of SMB1.
 	}
-	// TODO: Parse capabilities and return those results
+
+	//SMBCaps := &SMBCapabilitiesV1{
+	//	RawMode:           caps&SMB_CAP_RAW_MODE != 0,
+	//	MpxMode:           caps&SMB_CAP_MPX_MODE != 0,
+	//	Unicode:           caps&SMB_CAP_UNICODE != 0,
+	//	LargeFiles:        caps&SMB_CAP_LARGE_FILES != 0,
+	//	NTSMBs:            caps&SMB_CAP_NT_SMBS != 0,
+	//	RPCRemoteAPIs:     caps&SMB_CAP_RPC_REMOTE_APIS != 0,
+	//	Status32:          caps&SMB_CAP_STATUS32 != 0,
+	//	levelTwoOplocks:   caps&SMB_CAP_LEVEL_II_OPLOCKS != 0,
+	//	LockAndRead:       caps&SMB_CAP_LOCK_AND_READ != 0,
+	//	NTFind:            caps&SMB_CAP_NT_FIND != 0,
+	//	DFSSupport:        caps&SMB_CAP_DFS != 0,
+	//	InfoLevelPassthru: caps&SMB_CAP_INFOLEVEL_PASSTHRU != 0,
+	//	LargeReadX:        caps&SMB_CAP_LARGE_READX != 0,
+	//	LargeWriteX:       caps&SMB_CAP_LARGE_WRITEX != 0,
+	//	LWIO:              caps&SMB_CAP_LWIO != 0,
+	//	UNIX:              caps&SMB_CAP_UNIX != 0,
+	//	CompressedData:    caps&SMB_CAP_COMPRESSED_DATA != 0,
+	//	DynamicReauth:     caps&SMB_CAP_DYNAMIC_REAUTH != 0,
+	//	ExtendedSecurity:  caps&SMB_CAP_EXTENDED_SECURITY != 0,
+	//}
+	// placeholder for parsing capabilities, until I find a better method
+
 	logStruct.NegotiationLog = &NegotiationLog{
 		HeaderLog:    getHeaderLogV1(&negRes.HeaderV1),
 		SecurityMode: uint16(negRes.SecurityMode),
@@ -295,6 +363,8 @@ func (ls *LoggedSession) LoggedNegotiateProtocolv1(setup bool) error {
 	}
 	ssreq, _ := s.NewSessionSetupV1Req()
 	ssreq.SessionKey = negRes.SessionKey
+	ssreq.Capabilities = 0x80000050
+
 	s.Debug("Sending LoggedSessionSetupV1 Request", nil)
 	buf, err = s.send(ssreq)
 	if err != nil {
