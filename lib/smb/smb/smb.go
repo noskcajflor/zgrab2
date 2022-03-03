@@ -152,7 +152,7 @@ type SessionSetupV1Req struct {
 	Capabilities       uint32
 	ByteCount          uint16
 	SecurityBlob       *gss.NegTokenInit
-	VarData            []byte
+	NativeOs           []byte
 }
 
 type SessionSetupV1Res struct {
@@ -368,6 +368,7 @@ func (s *Session) NewSessionSetupV1Req() (SessionSetupV1Req, error) {
 		VCNumber:     0x01,
 		SessionKey:   0x00000000,
 		Reserved2:    0x00000000,
+		ByteCount:    0x000e,
 		SecurityBlob: &init,
 	}, nil
 }

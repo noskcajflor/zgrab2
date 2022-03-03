@@ -364,6 +364,7 @@ func (ls *LoggedSession) LoggedNegotiateProtocolv1(setup bool) error {
 	ssreq, _ := s.NewSessionSetupV1Req()
 	ssreq.SessionKey = negRes.SessionKey
 	ssreq.Capabilities = 0x80000050
+	ssreq.NativeOs = encoder.ToSmbString("zgrab2")
 
 	s.Debug("Sending LoggedSessionSetupV1 Request", nil)
 	buf, err = s.send(ssreq)
